@@ -1,0 +1,91 @@
+---
+title: iOS之Runloop
+date: 2018-02-02 17:43:45
+tags: iOS
+---
+
+Runloop,简而言之就是一个死循环用来接受内部和外部事件，定时任务等，和线程有千丝万缕的关系；
+
+```
+@autoreleasepool {
+    NSLog(@"begin");
+    int a = UIApplicationMain(argc, argv, nil, 	NSStringFromClass([AppDelegate class]));
+    NSLog(@"end");
+    return a;
+}
+```
+上面的end永远也不会打印，UIApplicationMain会启动一个死循环；
+
+```
+function loop() {
+    initialize();
+    do {
+		var message = get_next_message();
+		process_message(message);
+    } while (message != quit);
+}
+
+```
+
+### Runloop的创建
+苹果不允许直接创建Runloop，而是提供了两个方法：
+
+* CFRunLoopGetMain()
+* CFRunLoopGetCurrent()
+
+```
+CFRunLoopRef CFRunLoopGetMain() {
+    return _CFRunLoopGet(pthread_main_thread_np());
+}
+
+CFRunLoopRef CFRunLoopGetCurrent() {
+    return _CFRunLoopGet(pthread_self());
+}
+```
+每个方法实际上都传入了一个**线程**参数，实际上是一个thread作为key，runloop作为value的map。就是说一个线程对应一个最多只可能存在一个runloop的，非主线程不调用CFRunLoopGetCurrent是不会创建对应的Runloop。
+
+### Runloop的API
+RunLoop及其中的Mode的结构体：
+
+```
+struct __CFRunLoopMode {
+    CFStringRef _name;            // Mode Name, 例如 @"kCFRunLoopDefaultMode"
+    CFMutableSetRef _sources0;    // Set
+    CFMutableSetRef _sources1;    // Set
+    CFMutableArrayRef _observers; // Array
+    CFMutableArrayRef _timers;    // Array
+...
+};
+
+struct __CFRunLoop {
+    CFMutableSetRef _commonModes;     // Set
+    CFMutableSetRef _commonModeItems; // Set<Source/Observer/Timer>
+    CFRunLoopModeRef _currentMode;    // Current Runloop Mode
+    CFMutableSetRef _modes;           // Set
+...
+};
+```
+RunLoop中_modes保存所有的mode，commonModes保存的是标记为common的mode，每当RunLoop的内容发生变化时，RunLoop都会自动将_commonModeItems里的Source/Observer/Timer同步到具有“Common”标记的所有Mode里。基于此，可以通过把item加入_commonModeItems中来实现，即使mode切换（在commonmode之间切换）了，任务一样不会被影响。
+
+{% asset_image RunLoop_0.jpg RunLoop_0 %}
+一个RunLoop有很多个Mode,每个Mode里面有{CFRunLoopSourceRef}，[CFRunLoopTimerRef]，[CFRunLoopObserverRef]。每次往RunLoop里面添加任务的时候，只能为之指定一种mode。CFRunLoopSourceRef是基于source的事件来源，CFRunLoopTimerRef和NSTimer如出一辙，CFRunLoopObserverRef是一堆回掉函数指针的数组，用来RunLoop生命周期的回调；
+
+Example:
+
+```
+//标记一个mode为commonmode
+CFRunLoopAddCommonMode(CFRunLoopRef rl, CFRunLoopMode mode);	
+
+//最后一个参数是modename，也可以是commonmodes字符串，会自动把item添加到_commonModeItems，然后同步到_commonModes。
+CFRunLoopAddSource(CFRunLoopRef rl, CFRunLoopSourceRef source, CFRunLoopMode mode); 
+
+```
+
+### Runloop的应用
+
+* 基于Runloop obeserve，应用启动，休眠，消亡时刻对autoreleasepool的维护，一般逻辑代码（timer，响应事件）都是在对应线程的runloop中执行，通过obeserve时间点的控制能确保不会出现内存泄漏，还有UI刷新也和Runloop的obeserve相关；
+
+* 基于Runloop source，source0类型需要通过CFRunLoopSourceSignal(source)，将这个 Source 标记为待处理，然后手动调用 CFRunLoopWakeUp(runloop) 来唤醒 RunLoop，让其处理这个事件，source1维护一个mach_port和函数指针，会主动唤醒Runloop执行函数。
+
+* 屏幕触摸事件响应到app内部是基于source1；
+NSURLConnection，start的时候，会启动两个线程，其中一个线程负责回调各种网络事件，然后通过手动source0发信号，通知上层的代理方法；一般的网络库为了后代线程接受事件，往往schedule一个添加了空Source0(machport)的runloop，为什么会添加一个空的Source0主要是为了该runloop不会停掉（可以参考SRWebsocket）；
