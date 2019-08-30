@@ -83,9 +83,14 @@ CFRunLoopAddSource(CFRunLoopRef rl, CFRunLoopSourceRef source, CFRunLoopMode mod
 
 ### Runloop的应用
 
-* 基于Runloop obeserve，应用启动，休眠，消亡时刻对autoreleasepool的维护，一般逻辑代码（timer，响应事件）都是在对应线程的runloop中执行，通过obeserve时间点的控制能确保不会出现内存泄漏，还有UI刷新也和Runloop的obeserve相关；
+* 基于Runloop obeserve，应用启动，休眠，消亡时刻对autoreleasepool的维护，一般逻辑代码（timer，响应事件）都是在对应线程的runloop中执行，通过obeserve时间点的控制能确保不会出现内存泄漏，还有UI刷新也和Runloop的obeserve相关，开发者也可以创建obeserve实现在指定的时机执行一些操作；
 
-* 基于Runloop source，source0类型需要通过CFRunLoopSourceSignal(source)，将这个 Source 标记为待处理，然后手动调用 CFRunLoopWakeUp(runloop) 来唤醒 RunLoop，让其处理这个事件，source1维护一个mach_port和函数指针，会主动唤醒Runloop执行函数，更加偏向于底层。
+* 基于Runloop source，source0类型需要通过CFRunLoopSourceSignal(source)，将这个 Source 标记为待处理，然后手动调用 CFRunLoopWakeUp(runloop) 来唤醒 RunLoop，让其处理这个事件。source1维护一个mach_port和函数指针，会主动唤醒Runloop执行函数，更加偏向于底层。
 
 * 屏幕触摸事件响应到app内部是基于source1；
-NSURLConnection，start的时候，会启动两个线程，其中一个线程负责回调各种网络事件，然后通过手动source0发信号，通知上层的代理方法；一般的网络库为了后代线程接受事件，往往schedule一个添加了空Source0(machport)的runloop，为什么会添加一个空的Source0主要是为了该runloop不会停掉（可以参考SRWebsocket）；
+NSURLConnection，start的时候，会启动两个线程，其中一个线程负责回调各种网络事件，然后通过手动添加source0发信号唤醒（用timer明显不合适），通知上层的代理方法，这样可以让线程实现为一个单例避免频繁的创建；
+
+### 与Runloop相关的注意事项
+* 如果没有输入源或定时器连接到运行循环，则此方法立即退出；否则，它通过重复调用runMode：beforeDate:在NSDefaultRunLoopMode中运行接收器，直到指定的到期日期；
+* 当调用 performSelector:onThread: 时，实际上其会创建一个 Timer 加到对应的线程去，同样的，如果对应线程没有 RunLoop 该方法也会失效；
+* Timer没有加入到commonmode会出现不调用的情况；
