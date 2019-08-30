@@ -10,22 +10,22 @@ tags: iOS
 * CTFrameRef
 * CTLineRef
 * CTRunRef
+
+CTFrame 作为一个整体的画布(Canvas)，其中由行(CTLine)组成，而每行可以分为一个或多个小方块（CTRun）。
 {% asset_image 1364027353_1537.jpg 1364027353_1537 %}
 
 #### 一般流程
 ---
-* 创建DisplayView；
-* 创建显示配置CTFrameParserConfig，定义了渲染宽高，字体大小颜色；
-* 根据服务器返回的json数据（也可以随便定好解析格式）以及上面创建好的config，初始化CoreTextData，类似于下面的代码；
-* 把创建好的CoreTextData赋值给DisplayView，drawRect显示出来；
+使用core text就是先有一个要显示的string，然后定义这个string每个部分的样式－>attributedString －> 生成 CTFramesetter -> 得到CTFrame -> 绘制（CTFrameDraw）;
 
 #### 细节
 ---
 1. DisplayView继承子UIView，重写[drawRect:]方法。该方法通过传入的CTFrameRef，然后通过CTFrameDraw(self.data.ctFrame, context)就显示完毕;
-2. 自定义一个CTFrameParser把接口数据转换成包含CTFrameRef的CoreTextData的对象，解析过程如下：
-	- 把文本AttributedString创建CTFramesetterRef实例；
-	- 获得要绘制的区域的高度；
-	- 生成CTFrameRef实例；
+2. 自定义一个Parser把接口数据转换成包含CTFrameRef的CoreTextData的对象，解析过程如下：
+	- 创建AttributeString，这一步最关键；
+	- 根据AttributeString创建CTFramesetterRef实例；
+	- 根据CTFramesetterRef获取绘制高度；
+	- 根据CTFramesetterRef获取CTFrameRef；
 	- 将生成好的CTFrameRef实例和计算好的绘制高度保存到CoreTextData实例中，最后返回CoreTextData实例；
 
 ```
@@ -69,7 +69,7 @@ tags: iOS
 ---
 如果光是文本确实没什么好说的，但是加入了图片、链接、选中、选中menu、点击图片手势等细节之后很多地方有点费劲；
 
-* 图片的填充，在生成Attributestr的时候，根据接口来的array数据遍历append；如果其中的一个元素是图片，就创建空白占位符，并且设置它的CTRunDelegate信息，如果给CTRun设置了CTRunDelegateRefCT属性框架再渲染CTRun的时候会调用设置的delegate获取decent、ascent、width等信息用来绘制，在frameref创建好之后，遍历frameref的line以及line中的run初始化imageData.imagePosition。在最终drawrect的时候调用CGContextDrawImage(context, imageData.imagePosition, image.CGImage);就能够显示图片；
+* 图片的填充，在生成Attributestr的时候，根据接口来的array数据遍历append；如果其中的一个元素是图片，就创建空白占位符，并且设置它的CTRunDelegate信息，如果给CTRun设置了CTRunDelegateRef属性框架，在渲染CTRun的时候会调用设置的delegate获取decent、ascent、width等信息用来绘制。FrameRef创建好之后，遍历FrameRef的line以及line中的run初始化imageData.imagePosition，在最终drawrect的时候调用CGContextDrawImage(context, imageData.imagePosition, image.CGImage)就能够显示图片；
 
 ```
 
