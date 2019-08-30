@@ -5,6 +5,12 @@ tags: iOS
 ---
 
 有时候用网页展示一大片图文效果不怎么好，这时候就有必要用CoreText框架实现页面渲染了；
+#### CoreText重要的几个元素
+* CTFramesetterRef
+* CTFrameRef
+* CTLineRef
+* CTRunRef
+{% asset_image 1364027353_1537.jpg 1364027353_1537 %}
 
 #### 一般流程
 ---
@@ -16,7 +22,7 @@ tags: iOS
 #### 细节
 ---
 1. DisplayView继承子UIView，重写[drawRect:]方法。该方法通过传入的CTFrameRef，然后通过CTFrameDraw(self.data.ctFrame, context)就显示完毕;
-2. 自定义一个CTFrameParser把接口数据转换成包含CTFrameRef CoreTextData的对象，解析过程如下：
+2. 自定义一个CTFrameParser把接口数据转换成包含CTFrameRef的CoreTextData的对象，解析过程如下：
 	- 把文本AttributedString创建CTFramesetterRef实例；
 	- 获得要绘制的区域的高度；
 	- 生成CTFrameRef实例；
@@ -63,7 +69,7 @@ tags: iOS
 ---
 如果光是文本确实没什么好说的，但是加入了图片、链接、选中、选中menu、点击图片手势等细节之后很多地方有点费劲；
 
-* 图片的填充，在生成Attributestr的时候，根据接口来的array数据遍历append；如果其中的一个元素是图片，就创建空白占位符，并且设置它的CTRunDelegate信息，在frameref创建好之后，通过CTRunDelegate初始化imageData.imagePosition。在最终drawrect的时候调用CGContextDrawImage(context, imageData.imagePosition, image.CGImage);就能够显示图片；
+* 图片的填充，在生成Attributestr的时候，根据接口来的array数据遍历append；如果其中的一个元素是图片，就创建空白占位符，并且设置它的CTRunDelegate信息，如果给CTRun设置了CTRunDelegateRefCT属性框架再渲染CTRun的时候会调用设置的delegate获取decent、ascent、width等信息用来绘制，在frameref创建好之后，遍历frameref的line以及line中的run初始化imageData.imagePosition。在最终drawrect的时候调用CGContextDrawImage(context, imageData.imagePosition, image.CGImage);就能够显示图片；
 
 ```
 
