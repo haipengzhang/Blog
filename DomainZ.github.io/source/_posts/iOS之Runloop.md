@@ -42,7 +42,7 @@ CFRunLoopRef CFRunLoopGetCurrent() {
     return _CFRunLoopGet(pthread_self());
 }
 ```
-每个方法实际上都传入了一个**线程**参数，实际上是一个thread作为key，runloop作为value的map。就是说一个线程对应一个最多只可能存在一个runloop的，非主线程不调用CFRunLoopGetCurrent是不会创建对应的Runloop。
+每个方法实际上都传入了一个**线程**参数，实际上是一个thread作为key，Runloop作为value的map。就是说一个线程对应一个最多只可能存在一个runloop的，非主线程不调用CFRunLoopGetCurrent是不会创建对应的Runloop。一般线程执行任务完毕的时候线程和对应Runloop都会被销毁，在某些需求下，需要对Runloop做一些特殊操作，实现线程保活；
 
 ### Runloop的API
 RunLoop及其中的Mode的结构体：
