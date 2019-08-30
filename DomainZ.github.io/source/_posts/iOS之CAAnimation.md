@@ -49,8 +49,8 @@ UIView, CALayer, CAAnimation，CATransication等；
 }
 ```
 ### UIView的block动画
-* 对CALayer的animatable属性赋值的时候，会对CALayer的delegate调用【actionForLayer:forKey:】，如果该方法返回nil，则展示默认的动画，如果返回NSNull则不走动画，如果返回一个实现了CAAction协议的对象（例如cabasicanimtion）则会走这个返回的动画；
-* 如果设置Layer的animatable方法调用在block里面，则会返回一个CAAnimation<CAAction>；
+* 对CALayer的animatable属性赋值的时候，会对CALayer的delegate调用[actionForLayer:forKey:]，如果该方法返回nil，则展示默认的动画，如果返回NSNull则不走动画，如果返回一个实现了CAAction协议的对象（例如CABasicAnimtion）则会走这个返回的动画；
+* 如果设置Layer的animatable方法调用在uiview animation的block里面，则会返回一个CAAnimation<CAAction>；
 UIView的自带layer的delegate是自己，如果不在block里面设置的话，就返回nsnull就不会动了，如果直接加在layer上就返回nil显示隐式动画；
 
 ### CAMediaTiming
