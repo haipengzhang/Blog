@@ -27,4 +27,14 @@ UIView *shareBoardView = [[[NSBundle mainBundle] loadNibNamed:@"QBDLShareBoardVi
 如果要放一张图片
 {% asset_img avatar.jpg This is an example image %}
 
-- - -
+---
+### MD编辑好了，然后用hexo相关命令发布上去
+
+[hexo官方文档](https://hexo.io/zh-cn/docs/)
+
+0. hexo new post "blog title"
+1. hexo g	//生成
+2. hexo s	//本地服务器运行，通过localhost访问
+3. hexo d	//部署
+
+
