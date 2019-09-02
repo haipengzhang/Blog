@@ -1,7 +1,8 @@
 ---
 title: iOS之CoreText
 date: 2018-03-06 10:17:04
-tags: iOS
+tags: CoreText
+category: iOS
 ---
 
 有时候用网页展示一大片图文效果不怎么好，这时候就有必要用CoreText框架实现页面渲染了；

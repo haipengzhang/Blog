@@ -1,7 +1,7 @@
 ---
 title: iOS之Runloop
 date: 2018-02-02 17:43:45
-tags: iOS
+tags: Objective-C
 ---
 
 Runloop,简而言之就是一个死循环用来接受内部和外部事件，定时任务等，和线程有密切的关系；

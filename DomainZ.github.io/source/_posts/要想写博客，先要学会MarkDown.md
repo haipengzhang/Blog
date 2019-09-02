@@ -1,8 +1,12 @@
 ---
-title: 要想写博客，先要学会MarkDown
+
+title: MarkDown && Hexo
 date: 2018-01-24 17:38:42
+categories : Blog
 tags: MarkDown
+
 ---
+
 一般写文字先开始一个描述，就是说说这篇文章是将什么的？然后开始几个大标题，大标题里面几个小标题。文章前情说完了。
 
 ## 这里要写一个大标题
@@ -36,5 +40,17 @@ UIView *shareBoardView = [[[NSBundle mainBundle] loadNibNamed:@"QBDLShareBoardVi
 1. hexo g	//生成
 2. hexo s	//本地服务器运行，通过localhost访问
 3. hexo d	//部署
+
+
+通过以下初始化归档和分类目录
+
+0. hexo new page "categories"
+1. hexo new page "tags" 
+2. 打开 categories 文件夹下的 index.md ，在最下面一行加一行文字就行，注意中间有空格。type: categories;
+3. 打开 tags 文件夹下的 index.md ，在最下面一行加一行文字就行，注意中间有空格。type: tags;
+
+通过配置_config.yml的excerpt设置文章的展开全文
+
+0._config.yml--> excerpt = true
 
 

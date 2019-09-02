@@ -1,7 +1,8 @@
 ---
 title: iOS之CAAnimation
 date: 2018-03-02 18:53:26
-tags: iOS
+tags: iOS动画
+category: iOS
 ---
 UIView, CALayer, CAAnimation，CATransication等；
 

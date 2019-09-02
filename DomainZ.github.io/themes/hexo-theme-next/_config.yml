@@ -112,8 +112,8 @@ index_with_subtitle: false
 menu:
   home: / || home
   #about: /about/ || user
-  #tags: /tags/ || tags
-  #categories: /categories/ || th
+  tags: /tags/ || tags
+  categories: /categories/ || th
   archives: /archives/ || archive
   #schedule: /schedule/ || calendar
   #sitemap: /sitemap.xml || sitemap
@@ -129,8 +129,8 @@ menu_settings:
 # ---------------------------------------------------------------
 
 # Schemes
-scheme: Muse
-# scheme: Mist
+# scheme: Muse
+scheme: Mist
 # scheme: Pisces
 # scheme: Gemini
 
@@ -185,7 +185,7 @@ links_layout: block
 
 # Table Of Contents in the Sidebar
 toc:
-  enable: true
+  enable: false
 
   # Automatically add list number to toc.
   number: true
@@ -243,7 +243,7 @@ excerpt_description: true
 # Automatically Excerpt. Not recommend.
 # Please use <!-- more --> in the post to control excerpt accurately.
 auto_excerpt:
-  enable: false
+  enable: true
   length: 150
 
 # Post meta display settings

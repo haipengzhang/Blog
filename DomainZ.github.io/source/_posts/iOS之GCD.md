@@ -1,10 +1,11 @@
 ---
-title: iOS之GCD
+title: OC之GCD
 date: 2019-08-30 15:24:16
-tags:
+tags: Objective-C
+category: iOS
 ---
 
-### 什么是GCD
+### 什么是GCD?
 GCD（Grand Central Dispatch）是异步执行任务的技术之一（iOS中其他多线程技术：pthread、NSThread、NSOperation）。开发者只需要定义想要执行的任务并追加到适当的Dispatch Quue中，GCD就能生成必要的线程并执行，**通过GCD提供的系统级线程管理可以提高执行效率**。
 
 #### GCD队列
