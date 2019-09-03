@@ -67,7 +67,7 @@ categories: iOS
 ##### 获取对象的类定义
 	// 获取已注册的类定义的列表
 	int objc_getClassList ( Class *buffer, int bufferCount );
-
+	
 	// 创建并返回一个指向所有已注册类的指针列表
 	Class * objc_copyClassList ( unsigned int *outCount );
 
@@ -93,13 +93,163 @@ categories: iOS
 元类(Metaclass)就是类对象的类，每个类都有自己的元类，也就是objc_class结构体里面isa指针所指向的类. Objective-C的类方法是使用元类的根本原因，因为其中存储着对应的类对象调用的方法即**类方法**。
 
 #### 属性
-在Objective-C中，属性(property)和成员变量是不同的。那么，属性的本质是什么？它和成员变量之间有什么区别？简单来说属性是添加了存取方法的成员变量，也就是:
+在Objective-C中，属性(property)和成员变量是不同的。那么，属性的本质是什么？它和成员变量之间有什么区别？简单来说属性是添加了存取方法的成员变量，也就是:@property = ivar + getter + setter;
 
-	@property = ivar + getter + setter;
+	//遍历获取所有属性Property
+	- (void) getAllProperty {
+    	unsigned int propertyCount = 0;
+    	objc_property_t *propertyList = class_copyPropertyList([Person class], &propertyCount);
+    	for (unsigned int i = 0; i < propertyCount; i++ ) {
+        	objc_property_t *thisProperty = propertyList[i];
+        	const char* propertyName = property_getName(*thisProperty);
+        	NSLog(@"Person拥有的属性为: '%s'", propertyName);
+    	}
+	}
+
+##### objc\_property\_t & objc\_property\_attribute\_t
+	/// An opaque type that represents an Objective-C declared property.
+	typedef struct objc_property *objc_property_t;
+
+	typedef struct {
+    	const char * _Nonnull name;           /**< The name of the attribute */
+    	const char * _Nonnull value;          /**< The value of the attribute (usually empty) */
+	} objc_property_attribute_t;
 	
+常用的属性如下：
 
+- 属性类型 name值：T value：变化
+- 编码类型 name值：C(copy) &(strong) W(weak)空(assign) 等 value：无
+- 非/原子性 name值：空(atomic) N(Nonatomic) value：无
+- 变量名称 name值：V value：变化
 
-### 消息转发
+例如：
+
+	@interface person : NSObjec{  
+	  NSString *_name;  
+	}  
+	int main(){  
+	  objc_property_attribute_t nonatomic = {"N", ""};  
+	  objc_property_attribute_t strong = {"&", ""};  
+	  objc_property_attribute_t type = {"T", "@\"NSString\""};  
+	  objc_property_attribute_t ivar = {"V", "_name"};  
+	  objc_property_attribute_t attributes[] = {nonatomic, strong, type, ivar};  
+	  BOOL result = class_addProperty([person class], "name", attributes, 4);  
+	}
+
+##### 操作函数
+	
+	// 获取属性名
+	const char * property_getName ( objc_property_t property );
+	// 获取属性特性描述字符串
+	const char * property_getAttributes ( objc_property_t property );
+	// 获取属性中指定的特性
+	char * property_copyAttributeValue ( objc_property_t property, const char *attributeName );
+	// 获取属性的特性列表
+	objc_property_attribute_t * property_copyAttributeList ( objc_property_t property, unsigned int *outCount );
+
+#### 成员变量列表
+
+##### objc\_ivar\_list
+
+	struct objc_ivar_list {
+	    int ivar_count                                           OBJC2_UNAVAILABLE;
+	#ifdef __LP64__
+	    int space                                                OBJC2_UNAVAILABLE;
+	#endif
+	    /* variable length structure */
+	    struct objc_ivar ivar_list[1]                            OBJC2_UNAVAILABLE;
+	}
+ivars是一个数组，数组中每个元素是指向Ivar(变量信息)的指针。
+
+获取所有成员变量：
+
+	//遍历获取Person类所有的成员变量IvarList
+	- (void) getAllIvarList {
+	    unsigned int methodCount = 0;
+	    Ivar * ivars = class_copyIvarList([Person class], &methodCount);
+	    for (unsigned int i = 0; i < methodCount; i ++) {
+	        Ivar ivar = ivars[i];
+	        const char * name = ivar_getName(ivar);
+	        const char * type = ivar_getTypeEncoding(ivar);
+	        NSLog(@"Person拥有的成员变量的类型为%s，名字为 %s ",type, name);
+	    }
+	    free(ivars);
+	}
+
+#### 方法
+
+Method 代表类中某个方法的类型
+
+	/// An opaque type that represents a method in a class definition.
+	typedef struct objc_method *Method;
+
+objc_method 存储了方法名，方法类型和方法实现：
+
+	struct objc_method {
+	    SEL _Nonnull method_name                                 OBJC2_UNAVAILABLE;
+	    char * _Nullable method_types                            OBJC2_UNAVAILABLE;
+	    IMP _Nonnull method_imp                                  OBJC2_UNAVAILABLE;
+	}  OBJC2_UNAVAILABLE;
+	
+- 方法名类型为 SEL；
+- 方法类型 method_types 是个 char 指针，存储方法的参数类型和返回值类型；
+- method_imp 指向了方法的实现，本质是一个函数指针；
+ 
+简言之，Method = SEL + IMP + method_types，相当于在SEL和IMP之间建立了一个映射。以下是Method操作方法：
+	
+	// 调用指定方法的实现，返回的是方法实现时的返回，参数receiver不能为空，这个比method_getImplementation和method_getName快
+	id method_invoke ( id receiver, Method m, ... );
+	// 调用返回一个数据结构的方法的实现
+	void method_invoke_stret ( id receiver, Method m, ... );
+	// 获取方法名，希望获得方法明的C字符串，使用sel_getName(method_getName(method))
+	SEL method_getName ( Method m );
+	// 返回方法的实现
+	IMP method_getImplementation ( Method m );
+	// 获取描述方法参数和返回值类型的字符串
+	const char * method_getTypeEncoding ( Method m );
+	// 获取方法的返回值类型的字符串
+	char * method_copyReturnType ( Method m );
+	// 获取方法的指定位置参数的类型字符串
+	char * method_copyArgumentType ( Method m, unsigned int index );
+	// 通过引用返回方法的返回值类型字符串
+	void method_getReturnType ( Method m, char *dst, size_t dst_len );
+	// 返回方法的参数的个数
+	unsigned int method_getNumberOfArguments ( Method m );
+	// 通过引用返回方法指定位置参数的类型字符串
+	void method_getArgumentType ( Method m, unsigned int index, char *dst, size_t dst_len );
+	// 返回指定方法的方法描述结构体
+	struct objc_method_description * method_getDescription ( Method m );
+	// 设置方法的实现
+	IMP method_setImplementation ( Method m, IMP imp );
+	// 交换两个方法的实现
+	void method_exchangeImplementations ( Method m1, Method m2 );
+
+操作函数
+
+	// 添加方法
+	BOOL class_addMethod ( Class cls, SEL name, IMP imp, const char *types ); //和成员变量不同的是可以为类动态添加方法。如果有同名会返回NO，修改的话需要使用method_setImplementation
+	
+	// 获取实例方法
+	Method class_getInstanceMethod ( Class cls, SEL name );
+	
+	// 获取类方法
+	Method class_getClassMethod ( Class cls, SEL name );
+	
+	// 获取所有方法的数组
+	Method * class_copyMethodList ( Class cls, unsigned int *outCount );
+	
+	// 替代方法的实现
+	IMP class_replaceMethod ( Class cls, SEL name, IMP imp, const char *types );
+	
+	// 返回方法的具体实现
+	IMP class_getMethodImplementation ( Class cls, SEL name );
+	IMP class_getMethodImplementation_stret ( Class cls, SEL name );
+	
+	// 类实例是否响应指定的selector
+	BOOL class_respondsToSelector ( Class cls, SEL sel );
+
+### 消息转发流程
+
 #### objc_msgSend
 	[array insertObject:foo atIndex:5];
 	// 等价
