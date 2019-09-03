@@ -14,7 +14,7 @@ category: iOS
 
 CTFrame 作为一个整体的画布(Canvas)，其中由行(CTLine)组成，而每行可以分为一个或多个小方块（CTRun）。
 
-{% asset_image 1364027353_1537.jpg 1364027353_1537 %}
+{% asset_image 1364027353_1537.png 1364027353_1537 %}
 
 #### 一般流程
 ---
